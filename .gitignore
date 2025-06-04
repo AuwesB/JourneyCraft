@@ -34,8 +34,10 @@ build/
 *.dart.js
 *.info.json
 
-# Supabase generated files
+# Environment secrets
 .env
+
+# Supabase generated files
 supabase/.temp/
 supabase/migrations/
 
@@ -49,9 +51,9 @@ app.*.map.json
 android/.gradle/
 android/.idea/
 android/local.properties
-/android/app/debug
-/android/app/profile
-/android/app/release
+android/app/debug/
+android/app/profile/
+android/app/release/
 
 # iOS
 ios/Flutter/Generated.xcconfig

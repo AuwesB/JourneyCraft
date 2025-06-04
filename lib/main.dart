@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Supabase
+  // Load environment variables from .env file
+  await dotenv.load(fileName: ".env");
+
+  // Initialize Supabase with values from .env
   await Supabase.initialize(
-    url: 'https://fcznoqjzuqefjgzcoonc.supabase.co',
-    anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjem5vcWp6dXFlZmpnemNvb25jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkwMTQwNTEsImV4cCI6MjA2NDU5MDA1MX0.xDEg2VCH4iv7Yz2x-Jwvce2Qy3k-ta7g2MXCbelTF1Y',
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
 
   runApp(const MyApp());

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/navigation/AppRoutes.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,6 +14,7 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -35,6 +38,70 @@ class _LoginPageState extends State<LoginPage> {
         borderRadius: BorderRadius.circular(18),
         borderSide: BorderSide.none,
       ),
+    );
+  }
+
+  Future<void> _login() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      _showMessage("Please fill in all fields.");
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await Supabase.instance.client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+
+      if (response.user != null) {
+        Navigator.pushReplacementNamed(context, AppRoutes.home);
+      } else {
+        _showMessage("Login failed: Unknown error");
+      }
+    } on AuthException catch (error) {
+      _showMessage(error.message);
+    } catch (error) {
+      _showMessage("Unexpected error: $error");
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+
+    try {
+      await Supabase.instance.client.auth.signInWithOAuth(OAuthProvider.google);
+      // ✅ No manual navigation here — session checked after return
+    } on AuthException catch (error) {
+      _showMessage(error.message);
+    } catch (error) {
+      _showMessage("Unexpected error: $error");
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  BoxDecoration _inputShadow() {
+    return BoxDecoration(
+      boxShadow: [
+        BoxShadow(
+          color: Colors.deepPurple.withOpacity(0.2),
+          blurRadius: 20,
+          offset: const Offset(0, 10),
+        ),
+      ],
     );
   }
 
@@ -73,15 +140,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 48),
                 Container(
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.deepPurple.withOpacity(0.2),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
+                  decoration: _inputShadow(),
                   child: TextField(
                     controller: _emailController,
                     decoration: _inputDecoration('Email', Icons.email_rounded),
@@ -89,15 +148,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 28),
                 Container(
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.deepPurple.withOpacity(0.2),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
+                  decoration: _inputShadow(),
                   child: TextField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
@@ -137,9 +188,7 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/home');
-                    },
+                    onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
@@ -149,14 +198,36 @@ class _LoginPageState extends State<LoginPage> {
                       padding: const EdgeInsets.symmetric(vertical: 18),
                     ),
                     child: Center(
-                      child: Text(
-                        'Login',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child:
+                          _isLoading
+                              ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                              : Text(
+                                'Login',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 18,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 28),
+                Center(
+                  child: Text(
+                    'or continue with',
+                    style: GoogleFonts.poppins(color: Colors.black54),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: GestureDetector(
+                    onTap: _isLoading ? null : _signInWithGoogle,
+                    child: Image.asset(
+                      'lib/assets/google_logo.png',
+                      height: 48,
                     ),
                   ),
                 ),
@@ -171,7 +242,10 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.pushNamed(context, '/register');
+                          Navigator.pushReplacementNamed(
+                            context,
+                            AppRoutes.register,
+                          );
                         },
                         child: Text(
                           'Sign Up',

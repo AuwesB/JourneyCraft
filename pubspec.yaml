@@ -13,12 +13,11 @@ dependencies:
   flutter:
     sdk: flutter
   supabase_flutter: ^2.9.0
-  lottie: ^3.3.1
   flutter_dotenv: ^5.2.1
   smooth_page_indicator: ^1.2.1
   google_fonts: ^6.2.1
   cupertino_icons: ^1.0.8
-  mapbox_gl: ^0.16.0
+  webview_flutter: ^4.13.0
 
 dev_dependencies:
   flutter_test:
@@ -34,3 +33,4 @@ flutter:
     - lib/assets/animations/Passport.gif
     - lib/assets/animations/Plane.gif
     - lib/assets/animations/Robot.gif
+    - lib/assets/google_logo.png

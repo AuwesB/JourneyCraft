@@ -3,12 +3,14 @@ import 'package:journeycraft/views/auth/LoginPage.dart';
 import 'package:journeycraft/views/auth/RegisterPage.dart';
 import 'package:journeycraft/views/home/HomePage.dart';
 import 'package:journeycraft/views/onboarding/WelcomePage.dart';
+import 'package:journeycraft/views/home/MapPage.dart';
 
 class AppRoutes {
   static const String welcome = '/';
   static const String login = '/login';
   static const String register = '/register';
   static const String home = '/home';
+  static const String map = '/map';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {

@@ -8,7 +8,7 @@ import 'core/theme/AppTheme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load env
+  // Load environment variables
   await dotenv.load(fileName: "keys.env");
 
   // Initialize Supabase
@@ -33,13 +33,15 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final session = Supabase.instance.client.auth.currentSession;
+
     return MaterialApp(
       title: 'JourneyCraft',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
-      initialRoute: AppRoutes.welcome, // Start from welcome screen
+      initialRoute: session != null ? AppRoutes.home : AppRoutes.welcome,
       onGenerateRoute: AppRoutes.generateRoute,
     );
   }

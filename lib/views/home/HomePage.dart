@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/widgets/BottomNavBar.dart';
+import '../../core/navigation/AppRoutes.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,6 +20,12 @@ class _HomePageState extends State<HomePage> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _logout() async {
+    await Supabase.instance.client.auth.signOut();
+    if (!mounted) return;
+    Navigator.pushReplacementNamed(context, AppRoutes.login);
   }
 
   Widget buildTopCard() {
@@ -194,7 +203,7 @@ class _HomePageState extends State<HomePage> {
               style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
             ),
             subtitle: Text('Tap to explore', style: GoogleFonts.poppins()),
-            trailing: Icon(Icons.arrow_forward_ios_rounded, size: 18),
+            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
             onTap: () {},
           ),
         );
@@ -204,10 +213,9 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Explicitly set system UI overlay style
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle.dark.copyWith(
-        statusBarColor: Colors.transparent, // Transparent but icons stay dark
+        statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
       ),
     );
@@ -223,60 +231,28 @@ class _HomePageState extends State<HomePage> {
             icon: const Icon(Icons.notifications_none, color: Colors.black87),
             onPressed: () {},
           ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.black87),
+            onPressed: _logout,
+          ),
         ],
       ),
       body: Column(children: [buildTopCard(), buildTabs(), buildContentList()]),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.purple.shade100,
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: Colors.purple,
-          unselectedItemColor: Colors.grey,
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-          backgroundColor: Colors.transparent,
-          iconSize: 28,
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_rounded),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.chat_bubble_outline_rounded),
-              label: 'Chat',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.map_rounded),
-              label: 'Map',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.description_outlined),
-              label: 'Itinerary',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_rounded),
-              label: 'Profile',
-            ),
-          ],
-          onTap: (index) {
-            // Implement screen switching if needed
-          },
-        ),
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pushReplacementNamed(context, AppRoutes.home);
+          } else if (index == 1) {
+            // Chat route coming soon
+          } else if (index == 2) {
+            Navigator.pushReplacementNamed(context, AppRoutes.map);
+          } else if (index == 3) {
+            // Itinerary route coming soon
+          } else if (index == 4) {
+            // Profile route coming soon
+          }
+        },
       ),
     );
   }

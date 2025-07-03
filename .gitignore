@@ -35,7 +35,8 @@ build/
 *.info.json
 
 # Environment secrets
-.env
+keys.env
+
 
 # Supabase generated files
 supabase/.temp/

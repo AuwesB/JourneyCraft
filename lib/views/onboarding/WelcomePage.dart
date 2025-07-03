@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/navigation/AppRoutes.dart';
 
 class WelcomePage extends StatefulWidget {
@@ -16,22 +16,22 @@ class _WelcomePageState extends State<WelcomePage> {
 
   final List<Map<String, dynamic>> pages = [
     {
-      "animation": "assets/animations/Globe.gif",
+      "animation": "lib/assets/animations/Globe.gif",
       "title": "Explore the World 🌍",
       "desc": "Discover new destinations and cultures with JourneyCraft.",
     },
     {
-      "animation": "assets/animations/Passport.gif",
+      "animation": "lib/assets/animations/Passport.gif",
       "title": "Seamless Travel Docs 🛂",
       "desc": "Manage visas, passports and itineraries with ease.",
     },
     {
-      "animation": "assets/animations/Plane.gif",
+      "animation": "lib/assets/animations/Plane.gif",
       "title": "Book Your Flights ✈️",
       "desc": "Find and book flights to anywhere in the world.",
     },
     {
-      "animation": "assets/animations/Robot.gif",
+      "animation": "lib/assets/animations/Robot.gif",
       "title": "AI Travel Assistant 🤖",
       "desc": "Get AI-powered recommendations and support anytime.",
     },
@@ -69,7 +69,7 @@ class _WelcomePageState extends State<WelcomePage> {
                   return Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Lottie.asset(page["animation"], height: 300),
+                      Image.asset(page["animation"], height: 300),
                       const SizedBox(height: 32),
                       Text(
                         page["title"],

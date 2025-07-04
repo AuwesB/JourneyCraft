@@ -4,6 +4,7 @@ import 'package:journeycraft/views/auth/RegisterPage.dart';
 import 'package:journeycraft/views/home/HomePage.dart';
 import 'package:journeycraft/views/onboarding/WelcomePage.dart';
 import 'package:journeycraft/views/home/MapPage.dart';
+import 'package:journeycraft/views/kyc/KycPage.dart'; // <-- Make sure your KYCPage is in this folder
 
 class AppRoutes {
   static const String welcome = '/';
@@ -11,6 +12,7 @@ class AppRoutes {
   static const String register = '/register';
   static const String home = '/home';
   static const String map = '/map';
+  static const String kyc = '/kyc';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -22,6 +24,8 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const RegisterPage());
       case home:
         return MaterialPageRoute(builder: (_) => const HomePage());
+      case kyc:
+        return MaterialPageRoute(builder: (_) => const KYCPage());
       default:
         return MaterialPageRoute(
           builder:

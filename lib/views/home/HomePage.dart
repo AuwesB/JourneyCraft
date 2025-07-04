@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,6 +17,18 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
   final _pageController = PageController();
+  final _supabase = Supabase.instance.client;
+
+  String? preferredCountry;
+  String? countryCode;
+  Map<String, String> countryMap = {};
+
+  @override
+  void initState() {
+    super.initState();
+    loadCountries();
+    fetchUserSettings();
+  }
 
   @override
   void dispose() {
@@ -22,8 +36,41 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
+  Future<void> loadCountries() async {
+    final jsonStr = await rootBundle.loadString('lib/assets/codes.json');
+    final Map<String, dynamic> jsonMap = json.decode(jsonStr);
+    setState(() {
+      countryMap = jsonMap.map(
+        (code, name) => MapEntry(code.toLowerCase(), name as String),
+      );
+    });
+  }
+
+  Future<void> fetchUserSettings() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+
+    final data =
+        await _supabase
+            .from('usersettings')
+            .select()
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+    if (data != null && data['preferred_country'] != null) {
+      setState(() {
+        preferredCountry = data['preferred_country'];
+        final entry = countryMap.entries.firstWhere(
+          (e) => e.value == preferredCountry,
+          orElse: () => MapEntry('', ''),
+        );
+        countryCode = entry.key;
+      });
+    }
+  }
+
   Future<void> _logout() async {
-    await Supabase.instance.client.auth.signOut();
+    await _supabase.auth.signOut();
     if (!mounted) return;
     Navigator.pushReplacementNamed(context, AppRoutes.login);
   }
@@ -33,83 +80,89 @@ class _HomePageState extends State<HomePage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: Stack(
-          children: [
-            Image.network(
-              'https://images.unsplash.com/photo-1507525428034-b723cf961d3e',
-              height: 240,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder:
-                  (context, error, stackTrace) => Container(
-                    height: 240,
-                    color: Colors.purple.shade100,
-                    alignment: Alignment.center,
-                    child: const Icon(
-                      Icons.image_not_supported,
-                      size: 50,
-                      color: Colors.white70,
-                    ),
-                  ),
-            ),
-            Positioned(
-              top: 16,
-              left: 16,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.8),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'Travel',
-                  style: GoogleFonts.poppins(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            height: 260,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.3),
+                width: 1,
               ),
             ),
-            Positioned(
-              bottom: 16,
-              left: 16,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: 250,
-                    child: Text(
-                      'Discover Tokyo — Where neon lights meet tradition',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(Icons.access_time, color: Colors.white70, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        '3 hours ago',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white70,
-                          fontSize: 12,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (countryCode != null && countryCode!.isNotEmpty)
+                  Image.network(
+                    'https://flagcdn.com/w640/${countryCode!}.png',
+                    fit: BoxFit.fill,
+                    errorBuilder:
+                        (context, error, stackTrace) => Container(
+                          color: Colors.purple.shade100,
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            Icons.flag,
+                            size: 60,
+                            color: Colors.white70,
+                          ),
                         ),
-                      ),
-                    ],
                   ),
-                ],
-              ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.purple.withOpacity(0.2),
+                  ),
+                ),
+                if (preferredCountry != null)
+                  Positioned(
+                    bottom: 20,
+                    left: 20,
+                    right: 20,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.8),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            preferredCountry!,
+                            style: GoogleFonts.poppins(
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Your gateway to unforgettable journeys!',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                            shadows: [
+                              Shadow(
+                                blurRadius: 6,
+                                color: Colors.black45,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -226,6 +279,7 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_none, color: Colors.black87),
@@ -237,7 +291,12 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: Column(children: [buildTopCard(), buildTabs(), buildContentList()]),
+      body:
+          preferredCountry == null
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                children: [buildTopCard(), buildTabs(), buildContentList()],
+              ),
       bottomNavigationBar: BottomNavBar(
         currentIndex: _currentIndex,
         onTap: (index) {

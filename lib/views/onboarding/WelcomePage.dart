@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/navigation/AppRoutes.dart';
 
@@ -37,13 +38,39 @@ class _WelcomePageState extends State<WelcomePage> {
     },
   ];
 
-  void nextPage() {
+  @override
+  void initState() {
+    super.initState();
+    checkIfWelcomeSeen();
+  }
+
+  Future<void> checkIfWelcomeSeen() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeenWelcome = prefs.getBool('hasSeenWelcome') ?? false;
+    final hasCompletedKYC = prefs.getBool('hasCompletedKYC') ?? false;
+
+    if (hasSeenWelcome) {
+      if (!hasCompletedKYC) {
+        Navigator.pushReplacementNamed(context, AppRoutes.kyc);
+      } else {
+        Navigator.pushReplacementNamed(context, AppRoutes.home);
+      }
+    }
+  }
+
+  Future<void> setWelcomeSeen() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasSeenWelcome', true);
+  }
+
+  void nextPage() async {
     if (_currentIndex < pages.length - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
       );
     } else {
+      await setWelcomeSeen();
       Navigator.pushReplacementNamed(context, AppRoutes.login);
     }
   }
@@ -125,7 +152,8 @@ class _WelcomePageState extends State<WelcomePage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   TextButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      await setWelcomeSeen();
                       Navigator.pushReplacementNamed(context, AppRoutes.login);
                     },
                     child: Text(

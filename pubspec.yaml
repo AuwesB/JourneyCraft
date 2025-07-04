@@ -18,6 +18,11 @@ dependencies:
   google_fonts: ^6.2.1
   cupertino_icons: ^1.0.8
   webview_flutter: ^4.13.0
+  flutter_swiper_view: ^1.1.8
+  flutter_picker: ^2.1.0
+  http: ^1.4.0
+  shared_preferences: ^2.5.3
+
 
 dev_dependencies:
   flutter_test:
@@ -34,3 +39,4 @@ flutter:
     - lib/assets/animations/Plane.gif
     - lib/assets/animations/Robot.gif
     - lib/assets/google_logo.png
+    - lib/assets/codes.json

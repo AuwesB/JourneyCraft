@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/navigation/AppRoutes.dart';
 
 class LoginPage extends StatefulWidget {
@@ -15,6 +16,29 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkExistingSession();
+  }
+
+  /// ✅ Check if already logged in and redirect
+  Future<void> _checkExistingSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasCompletedKYC = prefs.getBool('hasCompletedKYC') ?? false;
+    final session = Supabase.instance.client.auth.currentSession;
+
+    if (session != null && session.user != null) {
+      if (hasCompletedKYC) {
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(context, AppRoutes.home);
+      } else {
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(context, AppRoutes.kyc);
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -59,7 +83,16 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (response.user != null) {
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
+        final prefs = await SharedPreferences.getInstance();
+        final hasCompletedKYC = prefs.getBool('hasCompletedKYC') ?? false;
+
+        if (hasCompletedKYC) {
+          if (!mounted) return;
+          Navigator.pushReplacementNamed(context, AppRoutes.home);
+        } else {
+          if (!mounted) return;
+          Navigator.pushReplacementNamed(context, AppRoutes.kyc);
+        }
       } else {
         _showMessage("Login failed: Unknown error");
       }
@@ -77,7 +110,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       await Supabase.instance.client.auth.signInWithOAuth(OAuthProvider.google);
-      // ✅ No manual navigation here — session checked after return
+      // After returning from OAuth, _checkExistingSession() logic will re-check
     } on AuthException catch (error) {
       _showMessage(error.message);
     } catch (error) {

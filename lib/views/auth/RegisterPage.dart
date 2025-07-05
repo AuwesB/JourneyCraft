@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/navigation/AppRoutes.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -16,6 +17,29 @@ class _RegisterPageState extends State<RegisterPage> {
   final _confirmController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkExistingSession();
+  }
+
+  /// ✅ Check if already logged in
+  Future<void> _checkExistingSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasCompletedKYC = prefs.getBool('hasCompletedKYC') ?? false;
+    final session = Supabase.instance.client.auth.currentSession;
+
+    if (session != null && session.user != null) {
+      if (hasCompletedKYC) {
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(context, AppRoutes.home);
+      } else {
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(context, AppRoutes.kyc);
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -67,9 +91,7 @@ class _RegisterPageState extends State<RegisterPage> {
       );
 
       if (response.user != null) {
-        _showMessage(
-          "Account created! Please verify your email and then log in.",
-        );
+        _showMessage("Account created! Please verify your email before login.");
         Navigator.pushReplacementNamed(context, AppRoutes.login);
       } else {
         _showMessage("Signup failed: Unknown error");
@@ -88,7 +110,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     try {
       await Supabase.instance.client.auth.signInWithOAuth(OAuthProvider.google);
-      // No forced navigation here — session will be checked later
+      // After OAuth return, _checkExistingSession will redirect
     } on AuthException catch (error) {
       _showMessage(error.message);
     } catch (error) {

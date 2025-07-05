@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -14,7 +13,7 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with RouteAware {
   int _currentIndex = 0;
   final _pageController = PageController();
   final _supabase = Supabase.instance.client;
@@ -23,10 +22,18 @@ class _HomePageState extends State<HomePage> {
   String? countryCode;
   Map<String, String> countryMap = {};
 
+  Color _flagTextColor = Colors.black;
+
   @override
   void initState() {
     super.initState();
     loadCountries();
+    fetchUserSettings();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     fetchUserSettings();
   }
 
@@ -65,6 +72,19 @@ class _HomePageState extends State<HomePage> {
           orElse: () => MapEntry('', ''),
         );
         countryCode = entry.key;
+
+        // Dynamically determine text color based on flag
+        if (countryCode == 'jp') {
+          _flagTextColor = Colors.black;
+        } else if (countryCode == 'sa') {
+          _flagTextColor = Colors.orange;
+        } else {
+          // Default logic: approximate
+          final bgColor = Colors.white; // fallback
+          final brightness = ThemeData.estimateBrightnessForColor(bgColor);
+          _flagTextColor =
+              brightness == Brightness.dark ? Colors.white : Colors.black;
+        }
       });
     }
   }
@@ -78,91 +98,93 @@ class _HomePageState extends State<HomePage> {
   Widget buildTopCard() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            height: 260,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.3),
-                width: 1,
-              ),
+      child: Container(
+        height: 260,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
             ),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (countryCode != null && countryCode!.isNotEmpty)
-                  Image.network(
-                    'https://flagcdn.com/w640/${countryCode!}.png',
-                    fit: BoxFit.fill,
-                    errorBuilder:
-                        (context, error, stackTrace) => Container(
-                          color: Colors.purple.shade100,
-                          alignment: Alignment.center,
-                          child: const Icon(
-                            Icons.flag,
-                            size: 60,
-                            color: Colors.white70,
-                          ),
+          ],
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (countryCode != null && countryCode!.isNotEmpty)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.network(
+                  'https://flagcdn.com/w640/${countryCode!}.png',
+                  fit: BoxFit.cover,
+                  errorBuilder:
+                      (context, error, stackTrace) => Container(
+                        color: Colors.grey.shade300,
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.flag,
+                          size: 60,
+                          color: Colors.white70,
                         ),
-                  ),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.purple.withOpacity(0.2),
-                  ),
+                      ),
                 ),
-                if (preferredCountry != null)
-                  Positioned(
-                    bottom: 20,
-                    left: 20,
-                    right: 20,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.8),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            preferredCountry!,
-                            style: GoogleFonts.poppins(
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Your gateway to unforgettable journeys!',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                            shadows: [
-                              Shadow(
-                                blurRadius: 6,
-                                color: Colors.black45,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+              ),
+            if (preferredCountry != null)
+              Positioned(
+                top: 20,
+                left: 20,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    preferredCountry!,
+                    style: GoogleFonts.poppins(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
                     ),
                   ),
-              ],
-            ),
-          ),
+                ),
+              ),
+            if (preferredCountry != null)
+              Positioned(
+                bottom: 10,
+                left: 20,
+                right: 20,
+                child: Text(
+                  'Your gateway to unforgettable journeys!',
+                  style: GoogleFonts.poppins(
+                    color: _flagTextColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 6,
+                        color: Colors.black26,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  textAlign: TextAlign.left,
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -301,15 +323,18 @@ class _HomePageState extends State<HomePage> {
         currentIndex: _currentIndex,
         onTap: (index) {
           if (index == 0) {
+            fetchUserSettings();
             Navigator.pushReplacementNamed(context, AppRoutes.home);
           } else if (index == 1) {
-            // Chat route coming soon
+            Navigator.pushNamed(context, AppRoutes.chat);
           } else if (index == 2) {
-            Navigator.pushReplacementNamed(context, AppRoutes.map);
+            // Map route coming soon
           } else if (index == 3) {
             // Itinerary route coming soon
           } else if (index == 4) {
-            // Profile route coming soon
+            Navigator.pushNamed(context, AppRoutes.profile).then((_) {
+              fetchUserSettings();
+            });
           }
         },
       ),

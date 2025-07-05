@@ -40,8 +40,24 @@ class _KYCPageState extends State<KYCPage> {
   @override
   void initState() {
     super.initState();
+    _checkSessionAndKYC();
     loadCountries();
     loadCurrencies();
+  }
+
+  /// ✅ New method to strictly check session & KYC flag
+  Future<void> _checkSessionAndKYC() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasCompletedKYC = prefs.getBool('hasCompletedKYC') ?? false;
+    final session = _supabase.auth.currentSession;
+
+    if (session != null && session.user != null && hasCompletedKYC) {
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
+    } else if (session == null || session.user == null) {
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, AppRoutes.login);
+    }
   }
 
   Future<void> loadCountries() async {
@@ -147,6 +163,7 @@ class _KYCPageState extends State<KYCPage> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('hasCompletedKYC', true);
 
+      if (!mounted) return;
       Navigator.pushReplacementNamed(context, AppRoutes.home);
     } catch (e) {
       ScaffoldMessenger.of(
@@ -180,7 +197,7 @@ class _KYCPageState extends State<KYCPage> {
             builder: (context, constraints) {
               return DropdownButtonFormField<String>(
                 value: selectedCountry,
-                isExpanded: true, // ✅ fix overflow
+                isExpanded: true,
                 items:
                     sortedEntries
                         .map(
